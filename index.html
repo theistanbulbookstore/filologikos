@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hellenic Philological Society of Constantinople</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Libraries -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+    <style>
+        :root { 
+            --bg-color: #ffffff;
+            --text-color: #111827;
+            --text-muted: #6b7280;
+            --accent-cyan: #0284c7;
+            --border-light: #e5e7eb;
+            --border-dark: #111827;
+            --font-mono: 'Fira Code', 'Consolas', monospace;
+        }
+        
+        body { font-family: var(--font-mono); background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px 40px; font-size: 0.85rem; }
+        
+        /* Layout */
+        .header-container { display: flex; align-items: center; gap: 25px; margin-bottom: 20px; border-bottom: 2px solid var(--border-dark); padding-bottom: 15px; }
+        .header-logo { height: 90px; width: auto; object-fit: contain; }
+        .header-text h1 { margin: 0 0 5px 0; color: var(--text-color); font-size: 1.6rem; font-weight: 500; }
+        .header-text p { margin: 0; color: var(--text-muted); font-size: 0.9rem; }
+        
+        /* Controls */
+        .controls { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
+        input[type="text"], select { padding: 8px 12px; font-family: var(--font-mono); font-size: 0.85rem; border: 1px solid var(--border-dark); border-radius: 2px; outline: none; }
+        input[type="text"]:focus, select:focus { border-color: var(--accent-cyan); }
+        .checkbox-group { display: flex; align-items: center; gap: 8px; color: var(--text-muted); }
+        optgroup { font-family: var(--font-mono); font-weight: 600; color: var(--text-color); font-style: normal; }
+        
+        /* Suggestions */
+        .suggestion-bar { display: none; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .suggestion-btn { background: var(--border-dark); color: #ffffff; border: 1px solid var(--border-dark); padding: 6px 12px; font-size: 0.75rem; cursor: pointer; font-family: var(--font-mono); border-radius: 2px; display: flex; align-items: center; gap: 5px; }
+        .suggestion-pill { background: #ffffff; border: 1px solid var(--border-light); padding: 6px 12px; font-size: 0.75rem; cursor: pointer; color: var(--text-color); font-family: var(--font-mono); border-radius: 2px; transition: 0.2s; }
+        .suggestion-pill:hover { border-color: var(--border-dark); background: #f9fafb; }
+
+        /* Notes & Tabs */
+        #catalogNote { background-color: #f9fafb; border-left: 4px solid var(--accent-cyan); padding: 10px 16px; margin-bottom: 20px; font-size: 0.8rem; color: var(--text-color); display: none; line-height: 1.5; width: 100%; box-sizing: border-box; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .tab-btn { background: transparent; border: 1px solid var(--border-light); padding: 8px 16px; font-size: 0.85rem; cursor: pointer; color: var(--text-color); font-family: var(--font-mono); transition: 0.2s; border-radius: 2px; }
+        .tab-btn:hover { border-color: var(--border-dark); }
+        .tab-btn.active { background: var(--border-dark); color: #ffffff; border-color: var(--border-dark); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* Tables */
+        .dataTables_wrapper .dataTables_filter { display: none !important; }
+        table.dataTable { font-family: var(--font-mono) !important; font-size: 0.85rem !important; border-collapse: collapse !important; width: 100% !important; }
+        table.dataTable thead th { background-color: #ffffff !important; border-bottom: 2px solid var(--border-dark) !important; padding: 10px !important; }
+        table.dataTable tbody td { border-bottom: 1px solid var(--border-light) !important; padding: 10px !important; vertical-align: top !important; }
+        .author-link { color: var(--accent-cyan); cursor: pointer; text-decoration: underline; font-weight: 500; }
+        .btn-small { padding: 4px 10px; font-size: 0.75rem; cursor: pointer; background: #ffffff; color: var(--text-color); border: 1px solid var(--border-light); border-radius: 2px; font-family: var(--font-mono); }
+        .btn-small:hover { border-color: var(--border-dark); background: var(--border-dark); color: #ffffff; }
+
+        /* Tag Pills */
+        .tag-container { display: flex; flex-wrap: wrap; gap: 4px; max-width: 320px; }
+        .tag-pill { background-color: #f3f4f6; border: 1px solid var(--border-light); padding: 2px 6px; font-size: 0.7rem; border-radius: 3px; color: var(--text-color); white-space: nowrap; }
+        .tag-pill.parent-tag { background-color: #e0f2fe; border-color: #bae6fd; color: #0369a1; font-weight: 600; }
+        .tag-more-btn { background: none; border: none; color: var(--accent-cyan); font-size: 0.7rem; cursor: pointer; padding: 2px 4px; font-family: var(--font-mono); text-decoration: underline; }
+        
+        /* Expandable Child Rows (NEW) */
+        td.details-control { cursor: pointer; text-align: center; color: var(--accent-cyan); font-weight: bold; font-size: 1.2rem; vertical-align: middle !important; width: 20px;}
+        tr.shown td.details-control::before { content: "-"; color: #dc2626; }
+        tr:not(.shown) td.details-control::before { content: "+"; }
+        .child-row-content { padding: 15px 25px; background-color: #f9fafb; border-left: 4px solid var(--accent-cyan); font-size: 0.85rem; line-height: 1.6; }
+        .ai-flag { background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 3px; font-weight: 600; font-size: 0.75rem; display: inline-block; margin-bottom: 8px; }
+
+        /* Modals */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 30px; border: 1px solid var(--border-dark); max-width: 800px; max-height: 90vh; overflow-y: auto; width: 90%; position: relative; }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 20px; cursor: pointer; color: var(--text-color); font-family: var(--font-mono); }
+        #scanImage { max-width: 100%; display: block; margin: 0 auto; border: 1px solid var(--border-light); }
+        
+        /* Network Map */
+        #networkTab.active { display: flex; gap: 20px; }
+        #networkContainer { flex: 3; height: 650px; border: 1px solid var(--border-light); background: #ffffff; }
+        #networkSidebar { flex: 1; border-left: 2px solid var(--border-dark); padding-left: 20px; overflow-y: auto; height: 650px; }
+        .sidebar-header { font-weight: 600; font-size: 1.1rem; margin-bottom: 5px; color: var(--accent-cyan); }
+        .sidebar-link { color: var(--accent-cyan); cursor: pointer; text-decoration: underline; display: block; margin-bottom: 6px; font-weight: 500; }
+        .sidebar-link:hover { color: var(--border-dark); }
+
+        /* Analytics Layouts */
+        .chart-wrapper { width: 100%; height: 400px; margin-bottom: 20px; }
+        .chart-title { text-align: center; font-size: 1.1rem; font-weight: 600; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid var(--border-light); }
+        .dual-chart-container { display: flex; flex-direction: column; gap: 40px; margin-top: 20px; margin-bottom: 40px; }
+        .split-row { display: flex; flex-direction: row; gap: 40px; margin-bottom: 40px;}
+        .split-item { flex: 1; }
+        .section-header { margin-top: 40px; margin-bottom: 10px; font-size: 1.4rem; font-weight: 600; color: var(--text-color); border-bottom: 2px solid var(--border-dark); padding-bottom: 5px; }
+        
+        /* Lists */
+        .top-list { list-style: none; padding: 0; margin: 0; }
+        .top-list li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-light); }
+        .top-list li span:first-child { font-weight: 500; cursor: pointer; color: var(--accent-cyan); text-decoration: underline; }
+        .top-list li span:last-child { color: var(--text-muted); }
+        
+        #aboutTab p { margin-bottom: 15px; line-height: 1.6; font-size: 0.95rem; }
+        .local-controls { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        
+        /* D3 Packed Circle UI */
+        .pack-svg { width: 100%; height: 400px; display: block; background: #ffffff; border: 1px solid var(--border-light); border-radius: 4px; }
+        .node circle { cursor: pointer; stroke: #111827; stroke-width: 1px; transition: opacity 0.2s, stroke-width 0.2s; }
+        .node circle:hover { stroke-width: 2.5px; opacity: 0.85; }
+        .node text { font-family: var(--font-mono); font-size: 11px; fill: #111827; text-anchor: middle; pointer-events: none; }
+        
+        .methodology-note { background: #f9fafb; border: 1px dashed var(--border-dark); padding: 12px 18px; margin-top: 10px; margin-bottom: 30px; font-size: 0.85rem; color: var(--text-color); line-height: 1.6;}
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <img src="syllogos.jpg" alt="Syllogos Logo" class="header-logo">
+        <div class="header-text">
+            <h1>Ελληνικός Φιλολογικός Σύλλογος Κωνσταντινουπόλεως</h1>
+            <p>Digital Catalog of Publications and Public Lectures (1861 - 1915)</p>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="openTab('journalTab', this)">1. Journal and Special Publications</button>
+        <button class="tab-btn" onclick="openTab('lectureTab', this)">2. Public Lectures</button>
+        <button class="tab-btn" onclick="openTab('semanticTab', this)">3. Semantic Search</button>
+        <button class="tab-btn" onclick="openTab('analyticsTab', this)">4. Visual Analytics</button>
+        <button class="tab-btn" onclick="openTab('networkTab', this)">5. Intellectual Network</button>
+        <button class="tab-btn" onclick="openTab('allTab', this)">6. All Entries (Review)</button>
+        <button class="tab-btn" onclick="openTab('aboutTab', this)">7. About</button>
+    </div>
+
+    <!-- Global Filters -->
+    <div class="controls" id="tableControls">
+        <input type="text" id="globalSearch" placeholder="Fuzzy search titles, authors..." style="width: 300px;">
+        <select id="filterYearPubs"><option value="">All Publication Years</option></select>
+        <select id="filterYearLecs" style="display:none;"><option value="">All Lecture Years</option></select>
+        
+        <select id="filterDiscipline"><option value="">All Disciplines</option></select>
+        <!-- NEW METADATA FILTERS -->
+        <select id="filterGenre"><option value="">All Genres</option></select>
+        <select id="filterPeriod"><option value="">All Periods</option></select>
+        <select id="filterPlace"><option value="">All Places</option></select>
+
+        <div class="checkbox-group" id="anonFilterGroup">
+            <input type="checkbox" id="anonFilter"> <label for="anonFilter">Anonymous / Folklore Only</label>
+        </div>
+    </div>
+
+    <!-- Suggestion Bar -->
+    <div class="suggestion-bar" id="suggestionBar">
+        <button class="suggestion-btn" onclick="refreshSuggestions()">🎲 Suggest Keywords</button>
+        <div id="suggestionPills" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+    </div>
+
+    <!-- Archival Notes -->
+    <div id="catalogNote">
+        <p style="margin-top: 0; margin-bottom: 6px;"><strong>Note:</strong> The original index for <em>Syngramma Periodikon</em>, the scholarly periodical of the Hellenic Philological Society of Constantinople, gives author names primarily in the genitive form (Ζωγράφου/Zografou rather than Ζωγράφος/Zografos). The index for the Society's public lectures, on the other hand, largely employs the nominative. The catalog below normalises names to the nominative only when they appear in both the nominative and the genitive across the two indices. If looking for Zografos/Ζωγράφος, it is easiest to search for the stem Zograf/Ζωγράφ. The Greek-language search is agnostic to accent marks.</p>
+        <p style="margin: 0;">Also note that the <em>Syngramma Periodikon</em> frequently published documents pertaining to the internal workings of the Society (meeting reports, updates on donations, etc.) and book excerpts. These are included only selectively in the 1922 cumulative index this project is based on. If researching such material, please refer to the actual volumes.</p>
+    </div>
+
+    <!-- TAB 1: Journal -->
+    <div id="journalTab" class="tab-content active">
+        <table id="journalTable" class="display nowrap" style="width:100%">
+            <thead><tr>
+                <th></th> <!-- Child Row Toggle -->
+                <th>Year</th>
+                <th>Author</th>
+                <th>Title</th>
+                <th>Subsection</th>
+                <th>Pages</th>
+                <th>Disciplines</th>
+                <th>Scan</th>
+                <th>Action</th>
+            </tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- TAB 2: Lectures -->
+    <div id="lectureTab" class="tab-content">
+        <table id="lectureTable" class="display nowrap" style="width:100%">
+            <thead><tr>
+                <th></th> <!-- Child Row Toggle -->
+                <th>Year</th>
+                <th>Speaker</th>
+                <th>Title</th>
+                <th>Lectures</th>
+                <th>Disciplines</th>
+                <th>Scan</th>
+                <th>Action</th>
+            </tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- TAB 3: Semantic Search -->
+    <div id="semanticTab" class="tab-content">
+        <h2 style="font-weight: 500;">AI Semantic Concept Search</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Search by concept or theme (e.g., "public health", "ancient philosophy") rather than exact keywords. (e.g., "infectious diseases", "ancient greek poetry", "bureaucracy").</p>
+        
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="text" id="semanticInput" placeholder="Enter a conceptual search..." style="width: 400px; padding: 10px; font-family: var(--font-mono);">
+            <button id="semanticBtn" class="btn-small" style="padding: 10px 20px; font-weight: bold;">Search Archive</button>
+        </div>
+        <div id="semanticStatus" style="color: #d97706; font-size: 0.85rem; margin-top: 10px; font-weight: 600;"></div>
+        
+        <div id="semanticResults" style="margin-top: 30px; display: flex; flex-direction: column; gap: 15px;">
+            <div style="padding: 30px; border: 1px dashed var(--border-light); text-align: center; color: var(--text-muted);">
+                [ Semantic Vector Results will appear here ]
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: Visual Analytics -->
+    <div id="analyticsTab" class="tab-content">
+        <p style="color: var(--text-muted); margin-bottom: 30px;">Comprehensive breakdown of society output. The modules below are decoupled and feature their own dedicated controls.</p>
+        
+        <div class="section-header">1. Top Contributors</div>
+        <div class="local-controls">
+            <select id="localTopPubYear"><option value="">All Journal Years</option></select>
+            <select id="localTopLecYear"><option value="">All Lecture Years</option></select>
+            <select id="localTopDiscipline"><option value="">All Disciplines</option></select>
+        </div>
+        <div class="split-row">
+            <div class="split-item">
+                <div class="chart-title">Most Published Authors (Journal)</div>
+                <ul class="top-list" id="topAuthorsList"></ul>
+            </div>
+            <div class="split-item">
+                <div class="chart-title">Most Frequent Speakers (Lectures)</div>
+                <ul class="top-list" id="topSpeakersList"></ul>
+            </div>
+        </div>
+
+        <div class="section-header" style="margin-top: 60px;">2. Thematic & Proportional Breakdowns</div>
+        <div class="local-controls">
+            <select id="localPiePubYear"><option value="">All Journal Years</option></select>
+            <select id="localPieLecYear"><option value="">All Lecture Years</option></select>
+        </div>
+        
+        <div class="methodology-note">
+            <strong>Methodology Note:</strong> The Pie Charts and Packed Circle maps below measure the <em>total occurrences of primary tags</em> assigned to the archive. Because 19th-century scholarly works were highly interdisciplinary, individual papers frequently appear across multiple categories. Therefore, the visual volume accurately represents the overarching thematic balance of the society's output, rather than mutually exclusive paper counts.
+        </div>
+        
+        <!-- Pie Charts -->
+        <div class="split-row">
+            <div class="split-item chart-wrapper" style="height: 350px;">
+                <div class="chart-title">Journal Publications by Primary Discipline</div>
+                <canvas id="pieChartPubsBroad"></canvas>
+            </div>
+            <div class="split-item chart-wrapper" style="height: 350px;">
+                <div class="chart-title">Public Lectures by Primary Discipline</div>
+                <canvas id="pieChartLecsBroad"></canvas>
+            </div>
+        </div>
+
+        <!-- Packed Circle Charts -->
+        <div class="split-row" style="margin-top: 20px;">
+            <div class="split-item chart-wrapper" style="height: 400px;">
+                <div class="chart-title">Journal Categories (D3 Packed Circles)</div>
+                <div id="packedChartPubs" class="pack-svg"></div>
+            </div>
+            <div class="split-item chart-wrapper" style="height: 400px;">
+                <div class="chart-title">Lecture Categories (D3 Packed Circles)</div>
+                <div id="packedChartLecs" class="pack-svg"></div>
+            </div>
+        </div>
+
+        <!-- Specific Bar Charts -->
+        <div class="split-row" style="margin-top: 20px;">
+            <div class="split-item chart-wrapper" style="height: 350px;">
+                <div class="chart-title">Top Specialized Subfields (Journal)</div>
+                <canvas id="barChartPubsSpecific"></canvas>
+            </div>
+            <div class="split-item chart-wrapper" style="height: 350px;">
+                <div class="chart-title">Top Specialized Subfields (Lectures)</div>
+                <canvas id="barChartLecsSpecific"></canvas>
+            </div>
+        </div>
+
+        <div class="section-header" style="margin-top: 60px;">3. Timeline of Output</div>
+        <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: -10px;">Total output of publications and public lectures per year. Click any bar to view the records.</p>
+        <div class="dual-chart-container">
+            <div class="chart-wrapper">
+                <div class="chart-title">Journal Publications Output</div>
+                <canvas id="timelineChartPubs"></canvas>
+            </div>
+            <div class="chart-wrapper">
+                <div class="chart-title">Public Lectures Output</div>
+                <canvas id="timelineChartLecs"></canvas>
+            </div>
+        </div>
+
+        <div class="section-header" style="margin-top: 60px;">4. Disciplinary Output Over Time</div>
+        <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: -10px;"><strong>Interactive:</strong> Click and drag horizontally inside the graph to zoom into a specific year range. Double click to reset zoom. This chart tracks Primary Disciplines across all years.</p>
+        <div class="dual-chart-container">
+            <div class="chart-wrapper" style="height: 450px;">
+                <div class="chart-title">Journal Publications Over Time</div>
+                <canvas id="lineChartPubs"></canvas>
+            </div>
+            <div class="chart-wrapper" style="height: 450px;">
+                <div class="chart-title">Public Lectures Over Time</div>
+                <canvas id="lineChartLecs"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 5: Network Graph -->
+    <div id="networkTab" class="tab-content">
+        <div id="networkContainer"></div>
+        <div id="networkSidebar">
+            <div class="sidebar-header" style="position: sticky; top: 0; background: white; z-index: 10; padding-bottom: 10px;">
+                <div id="sidebarTitle" style="font-size: 1.2rem; margin-bottom: 5px;">Intellectual Hub</div>
+                <input type="text" id="networkSearch" placeholder="Find author or field..." style="width: 100%; padding: 6px; box-sizing: border-box; font-family: var(--font-mono); border: 1px solid var(--border-dark); outline: none;">
+            </div>
+            <div id="sidebarContent" style="margin-top: 5px;">
+                <p id="sidebarDesc" style="color: var(--text-muted); margin-bottom: 15px;">Click any node on the map, or use the search bar, to inspect connections.</p>
+                <div id="sidebarLinks"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 6: All Entries (Review) -->
+    <div id="allTab" class="tab-content">
+        <p style="color: var(--text-muted); margin-bottom: 15px;">This tab combines all Journal and Lecture entries. Authors are formatted as "Last Name, First Name" to assist with alphabetized sorting and deduplication review.</p>
+        <table id="allTable" class="display nowrap" style="width:100%">
+            <thead><tr>
+                <th></th> <!-- Child Row Toggle -->
+                <th>Year</th>
+                <th>Author (Last, First)</th>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Disciplines</th>
+                <th>Scan</th>
+                <th>Action</th>
+            </tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- TAB 7: About -->
+    <div id="aboutTab" class="tab-content">
+        <div style="display: flex; align-items: center; gap: 40px; flex-wrap: wrap; max-width: 1100px;">
+            <div style="flex: 1; min-width: 400px;">
+                <h2 style="font-weight: 500; margin-top: 0;">About the Project</h2>
+                <p>Welcome to the digital repository of the <strong>Hellenic Philological Society of Constantinople</strong> (Hellenikos Philologikos Syllogos Konstantinoupoleos). Founded in 1861, the Syllogos soon became the most significant learned society in the Eastern Mediterranean. It has been called “the Ministry of Education of the Unredeemed Greeks” under Ottoman rule.</p>
+                <p>Amongst its many activities, the Syllogos published a journal and organized public lectures on issues of scholarly and popular interest. The present repository includes a searchable catalogue of both the journal and the public lectures. It also offers various tools to organise, visualise, and analyse this data in ways that were not previously possible.</p>
+                <p>The journal articles catalogued here (from 1864 to 1914) are available in hard copy, across thirty-three volumes. Digitized versions of some may be accessed <a href="#" style="color:var(--accent-cyan);">here</a>. The ultimate hope of this project is to fully integrate the text of each article into the repository.</p>
+                <p>The texts of the public lectures are lost. In some cases, the speakers developed these into subsequent journal articles, or published them independently. The titles alone give many insights into intellectual and social life in late Ottoman Istanbul, and amongst Ottoman Greeks.</p>
+                <p>For each entry, a photograph of the original hard-copy catalog page is also available (under 'SCAN' to the far right of the metadata table). This project is still in development, please do confirm your findings against these as necessary.</p>
+                <p>Curated and maintained by Kutay Onaylı. Contact at <a href="mailto:kutay.onayli@magd.ox.ac.uk" style="color:var(--accent-cyan);">kutay.onayli@magd.ox.ac.uk</a>. Καλή αντάμωση.</p>
+            </div>
+            <div style="flex: 0 0 auto; display: flex; align-items: center;">
+                <img src="about1.png" alt="Syllogos Building" style="max-width: 350px; width: 100%; height: auto; border: none; display: block;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="scanModal" class="modal">
+        <div class="modal-content" style="background: transparent; border: none; box-shadow: none;">
+            <span class="close-btn" onclick="closeModal('scanModal')" style="color: #111827; font-size: 30px; font-weight: bold;">[X]</span>
+            <img id="scanImage" src="" alt="Page Scan">
+        </div>
+    </div>
+
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('profileModal')">[X]</span>
+            <h2 id="profName" style="color: var(--text-color); font-weight: 600; margin-bottom: 5px;">Title</h2>
+            <p id="profStats" style="color: var(--text-muted); margin-bottom: 20px; border-bottom: 1px solid var(--border-light); padding-bottom: 10px;"></p>
+            <ul id="profItems" style="line-height: 1.8; list-style-type: none; padding-left: 0;"></ul>
+        </div>
+    </div>
+
+<script>
+    let masterData = [];
+    let journalDataGlobal = [];
+    let lectureDataGlobal = [];
+    let chartInstances = {};
+    let network;
+    let windowNodesMap = new Map();
+    let networkNodesData;
+    
+    const colors = [
+        '#0284c7', '#dc2626', '#16a34a', '#d97706', '#9333ea', '#db2777', 
+        '#0d9488', '#ea580c', '#4f46e5', '#ca8a04', '#2563eb', '#65a30d', 
+        '#111827', '#0369a1', '#be123c', '#15803d', '#b45309', '#7e22ce',
+        '#be185d', '#0f766e', '#c2410c', '#4338ca', '#a16207', '#1d4ed8', '#4d7c0f'
+    ];
+
+    const parentDomains = [
+        'Administration', 'Anthropology', 'Archaeology', 'Architecture', 'Art', 
+        'Byzantine Studies', 'Classics', 'Earth Sciences', 'Economics', 'Education', 
+        'Folklore', 'Gender Studies', 'Geography', 'History', 'Law & Political Science', 
+        'Literature', 'Medicine', 'Music', 'Natural & Exact Science', 'Philology', 
+        'Philosophy', 'Psychology', 'Public Health', 'Religion', 'Sociology'
+    ];
+
+    const topLevelDomains = parentDomains;
+
+    function removeGreekAccents(str) {
+        if (!str) return "";
+        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    }
+
+    function toMonotonic(str) {
+        if (!str) return "";
+        return str.normalize("NFD").replace(/[\u0313\u0314\u0342\u0300\u0308]/g, "").normalize("NFC");
+    }
+
+    function getStandardAuthor(row) {
+        return row.normalized_author || "Anonymous";
+    }
+
+    function flipName(name) {
+        if (!name || name === "Anonymous" || name === "N/A" || name.trim() === "") return name;
+        let cleanName = name.trim();
+        if (cleanName.toLowerCase().includes(' and ') || cleanName.toLowerCase().includes(' καὶ ')) return cleanName;
+        
+        let parts = cleanName.split(' ');
+        if (parts.length <= 1) return cleanName;
+        
+        let surname = parts.pop().replace(/,$/, '');
+        return surname + ", " + parts.join(' ');
+    }
+
+    // POINTED TO THE NEW AI METADATA FILE
+    Papa.parse("facets.csv", {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+            masterData = results.data.map(row => {
+                row.standard_author = getStandardAuthor(row);
+                return row;
+            });
+            initPortal();
+        }
+    });
+
+    function getCleanYear(row) {
+        let rawYear = row.volume_or_year_greek || "";
+        let subYear = row.subsection_greek || "";
+        
+        if (rawYear.includes("ΕΙΚΟΣΙΠΕΝΤΑΕΤΗΡΙΣ")) return "1888";
+        if (rawYear.includes("Παράρτημα")) return "1888";
+        if (rawYear.includes("ΖΩΓΡΑΦΕΙΟΣ ΑΓΩΝ")) {
+            if (subYear.includes("Α'")) return "1891";
+            if (subYear.includes("Β'")) return "1896";
+            return "1891";
+        }
+        if (rawYear.includes("ΖΩΓΡΑΦΕΙΟΣ ΕΛΛΗΝΙΚΗ ΒΙΒΛΙΟΘΗΚΗ")) return "ΖΩΓΡΑΦΕΙΟΣ ΕΛΛΗΝΙΚΗ ΒΙΒΛΙΟΘΗΚΗ";
+        
+        let m = rawYear.match(/\d{4}/);
+        return m ? m[0] : rawYear;
+    }
+
+    function initPortal() {
+        journalDataGlobal = [];
+        lectureDataGlobal = [];
+        const allData = masterData.slice();
+        
+        const yearsPubs = new Set();
+        const yearsLecs = new Set();
+        const mothersSet = new Set();
+        const granularSet = new Set();
+        
+        // NEW FILTER SETS
+        const genreSet = new Set();
+        const periodSet = new Set();
+        const placeSet = new Set();
+
+        masterData.forEach(row => {
+            if (!row.title_greek) return;
+            row.search_text = `${row.author_greek || ''} ${row.title_greek} ${row.title_english || ''} ${row.standard_author || ''}`;
+
+            if (row.volume_or_year_greek && row.volume_or_year_greek !== "N/A") {
+                if(row.entry_type === "Public Lecture") {
+                    yearsLecs.add(row.volume_or_year_greek);
+                } else {
+                    yearsPubs.add(row.volume_or_year_greek);
+                }
+            }
+            if (row.primary_disciplines && row.primary_disciplines !== "N/A" && row.primary_disciplines.toLowerCase() !== "uncategorized") {
+                row.primary_disciplines.split(',').forEach(d => mothersSet.add(d.trim()));
+            }
+            if (row.disciplines && row.disciplines !== "N/A" && row.disciplines.toLowerCase() !== "uncategorized") {
+                row.disciplines.split(',').forEach(d => granularSet.add(d.trim()));
+            }
+            
+            // Gather AI Facets
+            if (row.genre && row.genre !== "N/A" && row.genre.trim() !== "") genreSet.add(row.genre.trim());
+            if (row.period_covered && row.period_covered !== "N/A" && row.period_covered !== "none" && row.period_covered.trim() !== "") periodSet.add(row.period_covered.trim());
+            if (row.place_covered && row.place_covered !== "N/A" && row.place_covered !== "none" && row.place_covered.trim() !== "") placeSet.add(row.place_covered.trim());
+
+            if (row.entry_type === "Public Lecture") {
+                lectureDataGlobal.push(row);
+            } else {
+                journalDataGlobal.push(row);
+            }
+        });
+
+        populateDropdowns(yearsPubs, yearsLecs, mothersSet, granularSet, genreSet, periodSet, placeSet);
+        buildTables(journalDataGlobal, lectureDataGlobal, allData);
+        buildTimeline(journalDataGlobal, 'timelineChartPubs', '#111827');
+        buildTimeline(lectureDataGlobal, 'timelineChartLecs', '#0284c7');
+        
+        updateTopContributorsAnalytics();
+        updateVisualBreakdowns(); 
+        buildInteractiveLineCharts();
+        buildNetwork();
+        setupCustomFilters();
+        
+        if ($('.tab-content.active').attr('id') === 'journalTab' || $('.tab-content.active').attr('id') === 'lectureTab') {
+            $('#suggestionBar').css('display', 'flex');
+            if($('.tab-content.active').attr('id') === 'journalTab') { 
+                $('#catalogNote').show(); 
+            } else { 
+                $('#catalogNote').hide(); 
+            }
+            refreshSuggestions();
+        }
+    }
+
+    function refreshSuggestions() {
+        const conceptDict = {
+            "History": "Ιστορία", "Philology": "Φιλολογία", "Classics": "Κλασικές Σπουδές",
+            "Medicine": "Ιατρική", "Literature": "Λογοτεχνία", "Science": "Επιστήμη",
+            "Archaeology": "Αρχαιολογία", "Philosophy": "Φιλοσοφία", "Natural Sciences": "Φυσικές Επιστήμες",
+            "Religion": "Θρησκεία", "Education": "Εκπαίδευση", "Sociology": "Κοινωνιολογία",
+            "Geography": "Γεωγραφία", "Byzantine Studies": "Βυζαντινές Σπουδές", "Linguistics": "Γλωσσολογία",
+            "Public Health": "Δημόσια Υγεία", "Art": "Τέχνη", "Music": "Μουσική", "Law": "Νομική",
+            "Anthropology": "Ανθρωπολογία", "Epigraphy": "Επιγραφική", "Paleography": "Παλαιογραφία",
+            "Topography": "Τοπογραφία", "Biology": "Βιολογία", "Chemistry": "Χημεία", "Physics": "Φυσική",
+            "Mythology": "Μυθολογία", "Constantinople": "Κωνσταντινούπολη", "Athens": "Αθήνα", 
+            "Macedonia": "Μακεδονία", "Homer": "Όμηρος", "Sophocles": "Σοφοκλής", "Euripides": "Ευριπίδης",
+            "Astronomy": "Αστρονομία", "Mathematics": "Μαθηματικά", "Statistics": "Στατιστική",
+            "Economics": "Οικονομικά", "Demography": "Δημογραφία", "Architecture": "Αρχιτεκτονική",
+            "Byzantine History": "Βυζαντινή Ιστορία", "Ottoman History": "Οθωμανική Ιστορία", "Numismatics": "Νομισματική",
+            "Sigillography": "Σιγιλλλογραφία", "Folklore": "Λαογραφία", "Dialectology": "Διαλεκτολογία",
+            "Rhetoric": "Ρητορική", "Ethics": "Ηθική", "Logic": "Λογική",
+            "Psychology": "Ψυχολογία", "Neuroscience": "Νευροεπιστήμη", "Agriculture": "Γεωργία",
+            "Botany": "Βοτανική", "Zoology": "Ζωολογία", "Geology": "Γεωλογία",
+            "Meteorology": "Μετεωρολογία", "Mineralogy": "Ορυκτολογία", "Seismology": "Σεισμολογία",
+            "Theater": "Θέατρο", "Poetry": "Ποίηση", "Drama": "Δράμα",
+            "Biography": "Βιογραφία", "Bibliography": "Βιβλιογραφία", "Journalism": "Δημοσιογραφία"
+        };
+        
+        let activeTab = $('.tab-content.active').attr('id');
+        let poolSource = (activeTab === 'lectureTab') ? lectureDataGlobal : journalDataGlobal;
+        if (!poolSource || poolSource.length === 0) poolSource = masterData;
+
+        let candidateMap = new Map();
+
+        poolSource.forEach(row => {
+            if (row.disciplines && row.disciplines !== "N/A") {
+                row.disciplines.split(',').forEach(d => {
+                    let cleanD = d.trim();
+                    if (conceptDict[cleanD]) candidateMap.set(`disc_${cleanD}`, { en: cleanD, gr: conceptDict[cleanD], search: cleanD });
+                });
+            }
+            if (row.title_english && row.title_english !== "N/A") {
+                let enTitleLower = row.title_english.toLowerCase();
+                for (let key in conceptDict) {
+                    if (enTitleLower.includes(key.toLowerCase())) {
+                        candidateMap.set(`title_${key}`, { en: key, gr: conceptDict[key], search: key });
+                    }
+                }
+            }
+        });
+
+        let termsArray = Array.from(candidateMap.values());
+        let shuffled = termsArray.sort(() => 0.5 - Math.random()).slice(0, 7);
+        
+        let container = document.getElementById('suggestionPills');
+        container.innerHTML = '';
+        shuffled.forEach(termObj => {
+            let pill = document.createElement('div');
+            pill.className = 'suggestion-pill';
+            pill.innerText = `${termObj.en} (${termObj.gr})`;
+            pill.onclick = () => { 
+                $('#globalSearch').val(termObj.search).trigger('keyup'); 
+            };
+            container.appendChild(pill);
+        });
+    }
+
+    function renderDisciplines(data, type, row) {
+        if (!data || data === "N/A" || data.toLowerCase() === "null") return "N/A";
+        let tags = data.split(',').map(t => t.trim()).filter(t => t);
+        if (tags.length === 0) return "N/A";
+        
+        let maxVisible = 3;
+        let visibleTags = tags.slice(0, maxVisible);
+        let hiddenTags = tags.slice(maxVisible);
+        
+        let html = `<div class="tag-container" style="max-width: 320px;">`;
+        visibleTags.forEach(tag => {
+            let isParent = parentDomains.includes(tag);
+            let pillClass = isParent ? "tag-pill parent-tag" : "tag-pill";
+            html += `<span class="${pillClass}">${tag}</span>`;
+        });
+        
+        if (hiddenTags.length > 0) {
+            let uniqueId = 'tags_' + Math.random().toString(36).substr(2, 9);
+            html += `<span id="${uniqueId}_extra" style="display:none;">`;
+            hiddenTags.forEach(tag => {
+                let isParent = parentDomains.includes(tag);
+                let pillClass = isParent ? "tag-pill parent-tag" : "tag-pill";
+                html += `<span class="${pillClass}">${tag}</span>`;
+            });
+            html += `</span><button class="tag-more-btn" onclick="toggleTags('${uniqueId}', this, ${hiddenTags.length})">+${hiddenTags.length} more</button>`;
+        }
+        return html + `</div>`;
+    }
+
+    function toggleTags(id, btn, count) {
+        let extraSpan = document.getElementById(id + '_extra');
+        if (extraSpan.style.display === 'none') {
+            extraSpan.style.display = 'contents';
+            btn.innerText = 'show less';
+        } else {
+            extraSpan.style.display = 'none';
+            btn.innerText = `+${count} more`;
+        }
+    }
+
+    // NEW FORMATTING LOGIC FOR THE CHILD ROW
+    function formatChildRow(d) {
+        let html = '<div class="child-row-content">';
+        
+        if (d.insufficient_information === "True" || d.insufficient_information === true || d.insufficient_information === "true") {
+            html += '<div class="ai-flag">⚠️ AI flagged insufficient title information for deep classification</div><br>';
+        }
+        
+        let about = (d.aboutness_topic && d.aboutness_topic !== 'N/A' && d.aboutness_topic !== 'none') ? d.aboutness_topic : 'Information unavailable';
+        let genre = (d.genre && d.genre !== 'N/A' && d.genre !== 'none') ? d.genre : 'Uncategorized';
+        let period = (d.period_covered && d.period_covered !== 'none' && d.period_covered !== 'N/A') ? d.period_covered : 'N/A';
+        let place = (d.place_covered && d.place_covered !== 'none' && d.place_covered !== 'N/A') ? d.place_covered : 'N/A';
+        
+        html += '<div style="margin-bottom: 8px;"><strong>AI Summary:</strong> <span style="color: var(--text-muted);">' + about + '</span></div>';
+        html += '<div><strong>Genre:</strong> ' + genre + ' &nbsp;|&nbsp; ';
+        html += '<strong>Period:</strong> ' + period + ' &nbsp;|&nbsp; ';
+        html += '<strong>Geography Focus:</strong> ' + place + '</div>';
+        html += '</div>';
+        
+        return html;
+    }
+
+    function buildTables(journal, lecture, all) {
+        const renderScanBtn = (data, type, row) => `<button class="btn-small" onclick="viewScan('${row.source_image}')">Scan</button>`;
+        const renderCiteBtn = (data, type, row) => `<button class="btn-small" onclick="generateCitation('${escapeQuote(row.author_greek)}', '${escapeQuote(row.title_greek)}', '${escapeQuote(row.volume_or_year_greek)}')">Cite</button>`;
+        
+        const renderAuthor = (data, type, row) => {
+            return `<span class="author-link" onclick="openProfile('${escapeQuote(row.standard_author)}', 'All')">${row.standard_author}</span><br><span style="color:var(--text-muted); font-size:0.75rem;">${row.author_greek && row.author_greek !== "N/A" ? row.author_greek : ""}</span>`;
+        };
+        
+        const renderFlippedAuthor = (data, type, row) => {
+            return `<span class="author-link" onclick="openProfile('${escapeQuote(row.standard_author)}', 'All')">${flipName(row.standard_author)}</span><br><span style="color:var(--text-muted); font-size:0.75rem;">${flipName(row.author_greek && row.author_greek !== "N/A" ? row.author_greek : "")}</span>`;
+        };
+
+        const renderTitle = (data, type, row) => {
+            return `<span>${row.title_english || row.title_greek || ''}</span><br><span style="color:var(--text-muted); font-size:0.75rem;">${row.title_english ? (row.title_greek || '') : ''}</span>`;
+        };
+
+        const renderCombinedDisciplines = (data, type, row) => {
+            let base = row.disciplines && row.disciplines !== "N/A" ? row.disciplines.split(',').map(t=>t.trim()) : [];
+            let prim = row.primary_disciplines && row.primary_disciplines !== "N/A" ? row.primary_disciplines.split(',').map(t=>t.trim()) : [];
+            let combined = [...new Set([...base, ...prim])].filter(t=>t).join(', ');
+            return renderDisciplines(combined, type, row);
+        };
+
+        window.jt = $('#journalTable').DataTable({ 
+            data: journal, 
+            pageLength: 25, 
+            scrollX: true, 
+            columns: [ 
+                { className: 'details-control', orderable: false, data: null, defaultContent: '' }, // CHILD TOGGLE
+                { data: 'volume_or_year_greek' }, 
+                { data: null, render: renderAuthor }, 
+                { data: null, render: renderTitle }, 
+                { data: 'subsection_greek' }, 
+                { data: 'page_numbers' }, 
+                { data: null, render: renderCombinedDisciplines }, 
+                { data: null, render: renderScanBtn, orderable: false }, 
+                { data: null, render: renderCiteBtn, orderable: false } 
+            ] 
+        });
+
+        window.lt = $('#lectureTable').DataTable({ 
+            data: lecture, 
+            pageLength: 25, 
+            scrollX: true, 
+            columns: [ 
+                { className: 'details-control', orderable: false, data: null, defaultContent: '' }, // CHILD TOGGLE
+                { data: 'volume_or_year_greek' }, 
+                { data: null, render: renderAuthor }, 
+                { data: null, render: renderTitle }, 
+                { data: 'lecture_count' }, 
+                { data: null, render: renderCombinedDisciplines }, 
+                { data: null, render: renderScanBtn, orderable: false }, 
+                { data: null, render: renderCiteBtn, orderable: false } 
+            ] 
+        });
+
+        window.at = $('#allTable').DataTable({ 
+            data: all, 
+            pageLength: 50, 
+            scrollX: true, 
+            columns: [ 
+                { className: 'details-control', orderable: false, data: null, defaultContent: '' }, // CHILD TOGGLE
+                { data: 'volume_or_year_greek' }, 
+                { data: null, render: renderFlippedAuthor }, 
+                { data: null, render: renderTitle }, 
+                { data: 'entry_type' }, 
+                { data: null, render: renderCombinedDisciplines }, 
+                { data: null, render: renderScanBtn, orderable: false }, 
+                { data: null, render: renderCiteBtn, orderable: false } 
+            ] 
+        });
+
+        // Add event listener for opening and closing the child rows
+        $('#journalTable tbody, #lectureTable tbody, #allTable tbody').on('click', 'td.details-control', function () {
+            var tr = $(this).closest('tr');
+            var table = $(this).closest('table').DataTable();
+            var row = table.row(tr);
+
+            if (row.child.isShown()) {
+                row.child.hide();
+                tr.removeClass('shown');
+            } else {
+                row.child(formatChildRow(row.data())).show();
+                tr.addClass('shown');
+            }
+        });
+    }
+
+    function setupCustomFilters() {
+        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+            const rowObj = settings.aoData[dataIndex]._aData;
+            const tableId = settings.nTable.id; 
+            const query = removeGreekAccents($('#globalSearch').val());
+            const anonChecked = $('#anonFilter').is(':checked');
+            
+            const discFilter = $('#filterDiscipline').val();
+            const genreFilter = $('#filterGenre').val();
+            const periodFilter = $('#filterPeriod').val();
+            const placeFilter = $('#filterPlace').val();
+            
+            // 1. Year Filter
+            if (tableId === 'journalTable' || tableId === 'lectureTable') {
+                let yrFilter = tableId === 'journalTable' ? $('#filterYearPubs').val() : $('#filterYearLecs').val();
+                if (yrFilter && rowObj.volume_or_year_greek !== yrFilter) return false;
+            }
+            
+            // 2. Anonymous Filter 
+            if ((tableId === 'journalTable' || tableId === 'allTable') && anonChecked && rowObj.standard_author !== "Anonymous") return false;
+            
+            // 3. Metadata Filters
+            if (discFilter) {
+                let inPrimary = rowObj.primary_disciplines && rowObj.primary_disciplines.split(',').map(x=>x.trim()).includes(discFilter);
+                let inAll = rowObj.disciplines && rowObj.disciplines.split(',').map(x=>x.trim()).includes(discFilter);
+                if (!inPrimary && !inAll) return false;
+            }
+            if (genreFilter && rowObj.genre !== genreFilter) return false;
+            if (periodFilter && rowObj.period_covered !== periodFilter) return false;
+            if (placeFilter && rowObj.place_covered !== placeFilter) return false;
+            
+            // 4. Global Fuzzy Search
+            if (query && !removeGreekAccents(rowObj.search_text || "").includes(query)) return false;
+            
+            return true;
+        });
+
+        $('#globalSearch, #anonFilter, #filterDiscipline, #filterYearPubs, #filterYearLecs, #filterGenre, #filterPeriod, #filterPlace').on('keyup change', function() {
+            window.jt.draw(); 
+            window.lt.draw(); 
+            window.at.draw();
+        });
+
+        $('#localTopPubYear, #localTopLecYear, #localTopDiscipline').on('change', updateTopContributorsAnalytics);
+        $('#localPiePubYear, #localPieLecYear').on('change', updateVisualBreakdowns);
+    }
+
+    function populateDropdowns(yearsPubs, yearsLecs, mothersSet, granularSet, genreSet, periodSet, placeSet) {
+        let yp = document.getElementById("filterYearPubs");
+        let yl = document.getElementById("filterYearLecs");
+        
+        let d = document.getElementById("filterDiscipline");
+        let fg = document.getElementById("filterGenre");
+        let fp = document.getElementById("filterPeriod");
+        let fpl = document.getElementById("filterPlace");
+        
+        let localTopP = document.getElementById("localTopPubYear");
+        let localTopL = document.getElementById("localTopLecYear");
+        let localTopD = document.getElementById("localTopDiscipline");
+        let localPieP = document.getElementById("localPiePubYear");
+        let localPieL = document.getElementById("localPieLecYear");
+        
+        Array.from(yearsPubs).sort().forEach(y => { yp.add(new Option(y, y)); localTopP.add(new Option(y, y)); localPieP.add(new Option(y, y)); });
+        Array.from(yearsLecs).sort().forEach(y => { yl.add(new Option(y, y)); localTopL.add(new Option(y, y)); localPieL.add(new Option(y, y)); });
+        
+        Array.from(genreSet).sort().forEach(g => fg.add(new Option(g, g)));
+        Array.from(periodSet).sort().forEach(p => fp.add(new Option(p, p)));
+        Array.from(placeSet).sort().forEach(p => fpl.add(new Option(p, p)));
+
+        d.innerHTML = '<option value="">All Disciplines</option>';
+        localTopD.innerHTML = '<option value="">All Disciplines</option>';
+        
+        let primaryGroup = document.createElement('optgroup'); primaryGroup.label = "--- Primary Categories (Mothers) ---";
+        let subGroup = document.createElement('optgroup'); subGroup.label = "--- Specialized Subfields ---";
+
+        let localPrimaryGroup = document.createElement('optgroup'); localPrimaryGroup.label = "--- Primary Categories (Mothers) ---";
+        let localSubGroup = document.createElement('optgroup'); localSubGroup.label = "--- Specialized Subfields ---";
+
+        Array.from(mothersSet).sort().forEach(m => {
+            primaryGroup.appendChild(new Option(m, m));
+            localPrimaryGroup.appendChild(new Option(m, m));
+        });
+        
+        Array.from(granularSet).sort().forEach(sub => {
+            if (!mothersSet.has(sub)) {
+                subGroup.appendChild(new Option(sub, sub));
+                localSubGroup.appendChild(new Option(sub, sub));
+            }
+        });
+
+        d.appendChild(primaryGroup);
+        d.appendChild(subGroup);
+        localTopD.appendChild(localPrimaryGroup);
+        localTopD.appendChild(localSubGroup);
+    }
+
+    function renderChart(canvasId, type, configData, options) {
+        if(chartInstances[canvasId]) { chartInstances[canvasId].destroy(); }
+        chartInstances[canvasId] = new Chart(document.getElementById(canvasId), { type: type, data: configData, options: options });
+    }
+
+    function updateTopContributorsAnalytics() {
+        let yrPub = $('#localTopPubYear').val(); let yrLec = $('#localTopLecYear').val(); let discFilter = $('#localTopDiscipline').val();
+        let authCounts = {}; let speakCounts = {};
+        masterData.forEach(row => {
+            if (row.standard_author === "Anonymous") return;
+            if (discFilter) {
+                let inPrimary = row.primary_disciplines && row.primary_disciplines.split(',').map(x=>x.trim()).includes(discFilter);
+                let inAll = row.disciplines && row.disciplines.split(',').map(x=>x.trim()).includes(discFilter);
+                if (!inPrimary && !inAll) return;
+            }
+            if (row.entry_type === "Public Lecture") {
+                if (!yrLec || row.volume_or_year_greek === yrLec) { speakCounts[row.standard_author] = (speakCounts[row.standard_author] || 0) + 1; }
+            } else {
+                if (!yrPub || row.volume_or_year_greek === yrPub) { authCounts[row.standard_author] = (authCounts[row.standard_author] || 0) + 1; }
+            }
+        });
+        const sortAndRender = (cObj, eId, tFilter) => {
+            const sorted = Object.entries(cObj).sort((a,b)=>b[1]-a[1]).slice(0, 10);
+            const listEl = document.getElementById(eId);
+            listEl.innerHTML = sorted.length ? '' : `<li><span>No records found</span><span>-</span></li>`;
+            sorted.forEach(([name, count]) => { listEl.innerHTML += `<li><span onclick="openProfile('${escapeQuote(name)}', '${tFilter}')">${name}</span><span>${count} entries</span></li>`; });
+        };
+        sortAndRender(authCounts, 'topAuthorsList', 'Journal'); sortAndRender(speakCounts, 'topSpeakersList', 'Lecture');
+    }
+
+    function updateVisualBreakdowns() {
+        let yrPub = $('#localPiePubYear').val(); let yrLec = $('#localPieLecYear').val();
+        let pubsData = masterData.filter(r => r.entry_type !== "Public Lecture" && (!yrPub || r.volume_or_year_greek === yrPub));
+        let lecsData = masterData.filter(r => r.entry_type === "Public Lecture" && (!yrLec || r.volume_or_year_greek === yrLec));
+        buildSmartPieChart(pubsData, 'pieChartPubsBroad', yrPub); buildSmartPieChart(lecsData, 'pieChartLecsBroad', yrLec);
+        buildSpecificBarChart(pubsData, 'barChartPubsSpecific', yrPub); buildSpecificBarChart(lecsData, 'barChartLecsSpecific', yrLec);
+        buildD3CirclePack(pubsData, '#packedChartPubs', 'Journal', yrPub); buildD3CirclePack(lecsData, '#packedChartLecs', 'Lecture', yrLec);
+    }
+
+    function buildSmartPieChart(dataset, canvasId, yearFilter) {
+        let counts = {};
+        dataset.forEach(row => {
+            if(!row.primary_disciplines || row.primary_disciplines === "N/A") return;
+            row.primary_disciplines.split(',').forEach(d => {
+                let dName = d.trim();
+                if(!dName || dName.toLowerCase() === 'null') return;
+                if (!topLevelDomains.includes(dName)) return; 
+                counts[dName] = (counts[dName] || 0) + 1;
+            });
+        });
+        let sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+        if(chartInstances[canvasId]) { chartInstances[canvasId].destroy(); }
+        let chartObj = new Chart(document.getElementById(canvasId), {
+            type: 'pie', data: { labels: sorted.map(i => i[0]), datasets: [{ data: sorted.map(i => i[1]), backgroundColor: colors, borderWidth: 1 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } }, onClick: (event, elements, chart) => { 
+                if(elements.length > 0) { openDisciplineModal(chart.data.labels[elements[0].index], canvasId.includes('Pubs') ? 'Journal' : 'Lecture', yearFilter); }
+            } }
+        });
+        chartInstances[canvasId] = chartObj;
+    }
+
+    function buildSpecificBarChart(dataset, canvasId, yearFilter) {
+        let counts = {};
+        dataset.forEach(row => {
+            if(!row.disciplines || row.disciplines === "N/A") return;
+            row.disciplines.split(',').forEach(d => {
+                let dName = d.trim();
+                if(!dName || dName.toLowerCase() === 'null') return;
+                if (topLevelDomains.includes(dName)) return; 
+                counts[dName] = (counts[dName] || 0) + 1;
+            });
+        });
+        let sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0, 15);
+        if(chartInstances[canvasId]) { chartInstances[canvasId].destroy(); }
+        let chartObj = new Chart(document.getElementById(canvasId), {
+            type: 'bar', data: { labels: sorted.map(i => i[0]), datasets: [{ label: 'Entries', data: sorted.map(i => i[1]), backgroundColor: 'rgba(2, 132, 199, 0.8)', borderColor: '#0284c7', borderWidth: 1 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } }, onClick: (event, elements, chart) => { 
+                if(elements.length > 0) { openDisciplineModal(chart.data.labels[elements[0].index], canvasId.includes('Pubs') ? 'Journal' : 'Lecture', yearFilter); }
+            } }
+        });
+        chartInstances[canvasId] = chartObj;
+    }
+
+    function buildD3CirclePack(dataset, containerId, typeStr, yearFilter) {
+        let counts = {};
+        dataset.forEach(row => {
+            if(!row.primary_disciplines || row.primary_disciplines === "N/A") return;
+            row.primary_disciplines.split(',').forEach(d => {
+                let dName = d.trim();
+                if(!dName || dName.toLowerCase() === 'null') return;
+                if(!topLevelDomains.includes(dName)) return;
+                counts[dName] = (counts[dName] || 0) + 1;
+            });
+        });
+        let childrenData = Object.entries(counts).map(([name, count]) => ({ id: name, value: count }));
+        let rootData = { name: "root", children: childrenData };
+        const container = d3.select(containerId); container.html(""); 
+        const width = container.node().getBoundingClientRect().width || 450; const height = 400;
+        const svg = container.append("svg").attr("viewBox", `0 0 ${width} ${height}`).style("width", "100%").style("height", "100%");
+        const root = d3.hierarchy(rootData).sum(d => d.value).sort((a, b) => b.value - a.value);
+        const pack = d3.pack().size([width, height]).padding(5);
+        pack(root);
+        const colorScale = d3.scaleOrdinal(colors);
+        const node = svg.selectAll("g").data(root.leaves()).join("g").attr("transform", d => `translate(${d.x},${d.y})`).style("cursor", "pointer")
+            .on("click", (event, d) => { openDisciplineModal(d.data.id, typeStr, yearFilter); });
+        node.append("circle").attr("r", d => d.r).attr("fill", (d, i) => colorScale(i)).attr("stroke", "#111827").attr("stroke-width", 1.5).append("title").text(d => `${d.data.id}: ${d.data.value} entries`);
+        node.append("text").attr("dy", "-0.3em").style("font-size", d => Math.max(9, Math.min(d.r / 2.5, 13)) + "px").style("font-weight", "600").style("fill", "#ffffff").text(d => d.r > 18 ? d.data.id : "");
+        node.append("text").attr("dy", "1.1em").style("font-size", d => Math.max(8, Math.min(d.r / 3, 11)) + "px").style("fill", "#f3f4f6").text(d => d.r > 24 ? `(${d.data.value})` : "");
+    }
+
+    function buildInteractiveLineCharts() {
+        renderInteractiveLineChart(masterData.filter(r => r.entry_type !== "Public Lecture"), 'lineChartPubs');
+        renderInteractiveLineChart(masterData.filter(r => r.entry_type === "Public Lecture"), 'lineChartLecs');
+    }
+
+    function renderInteractiveLineChart(dataset, canvasId) {
+        let discCounts = {};
+        dataset.forEach(row => {
+            if(row.primary_disciplines && row.primary_disciplines !== "N/A") {
+                row.primary_disciplines.split(',').forEach(d => {
+                    let dName = d.trim();
+                    if(dName && dName.toLowerCase() !== 'null' && topLevelDomains.includes(dName)) { discCounts[dName] = (discCounts[dName] || 0) + 1; }
+                });
+            }
+        });
+        let allDiscs = Object.entries(discCounts).sort((a,b)=>b[1]-a[1]).map(x => x[0]);
+        let yearCounts = {};
+        dataset.forEach(row => {
+            let yr = getCleanYear(row);
+            if(!yr) return;
+            if(!yearCounts[yr]) { yearCounts[yr] = { "Total Output": 0 }; allDiscs.forEach(d => yearCounts[yr][d] = 0); }
+            yearCounts[yr]["Total Output"]++;
+            if(row.primary_disciplines && row.primary_disciplines !== "N/A") {
+                row.primary_disciplines.split(',').forEach(d => {
+                    let dName = d.trim();
+                    if(dName && yearCounts[yr][dName] !== undefined) { yearCounts[yr][dName]++; }
+                });
+            }
+        });
+        let years = Object.keys(yearCounts).sort();
+        let datasets = [{ label: "TOTAL OUTPUT", data: years.map(y => yearCounts[y]["Total Output"]), borderColor: '#000000', backgroundColor: '#000000', borderWidth: 3, borderDash: [5, 5], fill: false, tension: 0.3 }];
+        allDiscs.forEach((dName, idx) => { datasets.push({ label: dName, data: years.map(y => yearCounts[y][dName]), borderColor: colors[idx % colors.length], backgroundColor: colors[idx % colors.length], borderWidth: 2, fill: false, tension: 0.3, hidden: idx >= 12 }); });
+        renderChart(canvasId, 'line', { labels: years, datasets: datasets }, { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' }, zoom: { pan: { enabled: true, mode: 'x' }, zoom: { drag: { enabled: true, backgroundColor: 'rgba(2,132,199,0.2)' }, wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' } } } });
+        document.getElementById(canvasId).ondblclick = function() { chartInstances[canvasId].resetZoom(); };
+    }
+
+    function buildTimeline(dataset, canvasId, colorHex) {
+        let counts = {};
+        dataset.forEach(row => { let yr = getCleanYear(row); if(yr) counts[yr] = (counts[yr] || 0) + 1; });
+        let labels = Object.keys(counts).sort();
+        renderChart(canvasId, 'bar', { labels: labels, datasets: [{ label: 'Total Records', data: labels.map(l => counts[l]), backgroundColor: colorHex }] }, { responsive: true, maintainAspectRatio: false, onClick: (event, elements, chart) => { 
+            if(elements.length > 0) { openYearModal(chart.data.labels[elements[0].index], canvasId.includes('Pubs') ? 'Journal' : 'Lecture'); }
+        } });
+    }
+
+    function buildNetwork() {
+        let edgesArr = []; windowNodesMap = new Map();
+        masterData.forEach(row => {
+            let author = row.standard_author; let disc = row.disciplines;
+            if(!author || author === "N/A" || !disc || disc === "N/A" || author === "Anonymous") return;
+            if(!windowNodesMap.has(author)) { windowNodesMap.set(author, {id: author, label: author, group: 'author'}); }
+            disc.split(',').forEach(d => {
+                let dName = d.trim(); let isTopLevel = topLevelDomains.includes(dName);
+                if(!windowNodesMap.has(dName)) { windowNodesMap.set(dName, { id: dName, label: dName, group: isTopLevel ? 'mother' : 'discipline' }); }
+                edgesArr.push({from: author, to: dName});
+            });
+        });
+        networkNodesData = new vis.DataSet(Array.from(windowNodesMap.values()));
+        let edgesData = new vis.DataSet(edgesArr);
+        let options = {
+            nodes: { font: { face: 'Fira Code' } },
+            groups: {
+                author: { color: {background: '#e0f2fe', border: '#0284c7', highlight: {background: '#f3e8ff', border: '#7e22ce'}}, shape: 'dot', size: 9, font: {size: 11, color: '#111827'} },
+                mother: { color: {background: '#111827', border: '#111827', highlight: {background: '#581c87', border: '#3b0764'}}, shape: 'box', font: {color: 'white', size: 14, face: 'Fira Code', bold: true} },
+                discipline: { color: {background: '#f3f4f6', border: '#d1d5db', highlight: {background: '#e5e7eb', border: '#9ca3af'}}, shape: 'ellipse', font: {color: '#4b5563', size: 11, face: 'Fira Code'} }
+            },
+            edges: { color: { color: 'rgba(156, 163, 175, 0.35)', highlight: '#7e22ce' }, width: 1, selectionWidth: 3 },
+            interaction: { multiselect: true, hover: true },
+            physics: { enabled: true, barnesHut: { gravitationalConstant: -3000, centralGravity: 0.15, springLength: 120, damping: 0.09 }, stabilization: { iterations: 150 } }
+        };
+        network = new vis.Network(document.getElementById('networkContainer'), {nodes: networkNodesData, edges: edgesData}, options);
+        network.on("stabilizationIterationsDone", function () { network.setOptions( { physics: false } ); });
+        network.on("selectNode", function (params) { if (params.nodes.length > 0) { updateSidebar(params.nodes[params.nodes.length - 1], network.getConnectedNodes(params.nodes[params.nodes.length - 1])); } });
+        network.on("deselectNode", function (params) {
+            if (params.nodes.length > 0) { updateSidebar(params.nodes[params.nodes.length - 1], network.getConnectedNodes(params.nodes[params.nodes.length - 1])); } 
+            else { document.getElementById('sidebarTitle').innerText = "Intellectual Hub"; document.getElementById('sidebarDesc').innerText = "Click any node on the map, or use the search bar, to inspect connections."; document.getElementById('sidebarLinks').innerHTML = ''; }
+        });
+        $('#networkSearch').on('input', function() {
+            let val = $(this).val().toLowerCase().trim(); if(!val) return; let foundId = null;
+            for(let key of windowNodesMap.keys()) { if(key.toLowerCase().includes(val)) { foundId = key; break; } }
+            if(foundId) { network.selectNodes([foundId]); network.focus(foundId, { scale: 1.2, animation: true }); updateSidebar(foundId, network.getConnectedNodes(foundId)); }
+        });
+    }
+
+    function updateSidebar(nodeId, neighbors) {
+        document.getElementById('sidebarTitle').innerText = nodeId;
+        document.getElementById('sidebarDesc').innerText = `Connected nodes (${neighbors.length}): Click any link below to jump directly to it on the map.`;
+        let sidebar = document.getElementById('sidebarLinks'); sidebar.innerHTML = '';
+        let nodeObj = windowNodesMap.get(nodeId);
+        if (nodeObj && nodeObj.group === 'author') {
+            let profileLink = document.createElement('a'); profileLink.innerText = "[ View Publications & Lectures ]"; profileLink.style.display = 'block'; profileLink.style.marginBottom = '15px'; profileLink.style.cursor = 'pointer'; profileLink.style.color = 'var(--text-color)'; profileLink.style.fontWeight = 'bold'; profileLink.onclick = () => openProfile(nodeId, "All");
+            sidebar.appendChild(profileLink);
+        }
+        neighbors.forEach(n => {
+            let link = document.createElement('span'); link.className = 'sidebar-link'; link.innerText = n;
+            link.onclick = () => { network.selectNodes([n]); network.focus(n, { scale: 1.2, animation: true }); updateSidebar(n, network.getConnectedNodes(n)); };
+            sidebar.appendChild(link);
+        });
+    }
+
+    function openTab(tabId, element) {
+        $('.tab-content').removeClass('active'); $('.tab-btn').removeClass('active'); $('#' + tabId).addClass('active'); $(element).addClass('active');
+        if(tabId === 'journalTab' || tabId === 'lectureTab' || tabId === 'allTab') {
+            $('#tableControls').show();
+            if(tabId === 'journalTab') { $('#catalogNote').show(); } else { $('#catalogNote').hide(); }
+            $('#filterYearPubs').toggle(tabId === 'journalTab'); $('#filterYearLecs').toggle(tabId === 'lectureTab'); $('#anonFilterGroup').toggle(tabId === 'journalTab' || tabId === 'allTab');
+        } else { $('#tableControls').hide(); $('#catalogNote').hide(); }
+        if(tabId === 'journalTab' || tabId === 'lectureTab') { $('#suggestionBar').css('display', 'flex'); refreshSuggestions(); } else { $('#suggestionBar').hide(); }
+    }
+
+    let currentModalData = { type: '', title: '', subtitle: '', items: [] };
+
+    function renderFlatList(items, query = "") {
+        let list = document.getElementById('profItems'); list.innerHTML = '';
+        let filtered = items.filter(i => (i.search_text || "").toLowerCase().includes(query.toLowerCase()));
+        if (filtered.length === 0) { list.innerHTML = "<li>No matching records found.</li>"; return; }
+        filtered.forEach(item => {
+            let li = document.createElement('li'); li.style.marginBottom = '8px';
+            let typeTag = item.entry_type === "Public Lecture" ? " <strong>[Lecture]</strong>" : "";
+            li.innerHTML = `<strong>${getCleanYear(item) || 'n.d.'}</strong>: ${item.title_english || item.title_greek || ''} - <em>${item.standard_author}</em>${typeTag}`;
+            list.appendChild(li);
+        });
+    }
+
+    function renderGroupedList(items, query = "") {
+        let list = document.getElementById('profItems'); list.innerHTML = '';
+        let filtered = items.filter(i => (i.search_text || "").toLowerCase().includes(query.toLowerCase()));
+        if (filtered.length === 0) { list.innerHTML = "<li>No matching records found.</li>"; return; }
+        let grouped = {};
+        filtered.forEach(item => {
+            let discs = item.disciplines && item.disciplines !== "N/A" ? item.disciplines.split(',').map(d => d.trim()) : ["Uncategorized"];
+            discs.forEach(d => { if(!grouped[d]) grouped[d] = []; grouped[d].push(item); });
+        });
+        for (const [disc, works] of Object.entries(grouped).sort()) {
+            let discHeader = document.createElement('div'); discHeader.innerHTML = `<h3 style="color: var(--accent-cyan); margin-bottom: 5px; margin-top: 20px;">${disc}</h3>`; list.appendChild(discHeader);
+            works.sort((a,b) => (getCleanYear(a) || "9999").localeCompare(getCleanYear(b) || "9999")).forEach(item => {
+                let li = document.createElement('li'); li.style.marginBottom = '5px'; li.style.listStyleType = 'square'; li.style.marginLeft = '20px';
+                let typeTag = item.entry_type === "Public Lecture" ? " <strong>[Lecture]</strong>" : "";
+                li.innerHTML = `<strong>${getCleanYear(item) || 'n.d.'}</strong>: ${item.title_english || item.title_greek || ''}${typeTag}`;
+                list.appendChild(li);
+            });
+        }
+    }
+
+    $(document).on('input', '#modalSearch', function() { 
+        let val = $(this).val(); 
+        if (currentModalData.type === 'profile') { renderGroupedList(currentModalData.items, val); } else { renderFlatList(currentModalData.items, val); }
+    });
+
+    function setupModalHeader(title, subtitle, type, items) {
+        currentModalData = { type, title, subtitle, items };
+        document.getElementById('profName').innerText = title; 
+        document.getElementById('profStats').innerHTML = `${subtitle} <br><input type="text" id="modalSearch" placeholder="Search within these results..." style="margin-top: 10px; width: 300px; padding: 6px; font-family: var(--font-mono); border: 1px solid var(--border-dark); outline: none;">`;
+        document.getElementById('profileModal').style.display = 'flex';
+    }
+
+    function openListModal(title, subtitle, items) { setupModalHeader(title, subtitle, 'list', items); renderFlatList(items); }
+
+    function openProfile(authorName, entryTypeFilter = "All") {
+        let items = masterData.filter(r => r.standard_author === authorName);
+        if (entryTypeFilter === "Journal") items = items.filter(r => r.entry_type !== "Public Lecture");
+        if (entryTypeFilter === "Lecture") items = items.filter(r => r.entry_type === "Public Lecture");
+        setupModalHeader(authorName, `Total Contributions (${entryTypeFilter}): ${items.length}`, 'profile', items); renderGroupedList(items);
+    }
+    
+    function openYearModal(year, type) {
+        let items = masterData.filter(r => getCleanYear(r) === year);
+        if(type === 'Journal') items = items.filter(r => r.entry_type !== "Public Lecture");
+        if(type === 'Lecture') items = items.filter(r => r.entry_type === "Public Lecture");
+        openListModal(`Output for Year: ${year}`, `Total Records (${type}): ${items.length}`, items);
+    }
+    
+    function openDisciplineModal(disc, type, yearFilter = "") {
+        let items = masterData.filter(r => {
+            let primArr = r.primary_disciplines ? r.primary_disciplines.split(',').map(x=>x.trim()) : [];
+            let allArr = r.disciplines ? r.disciplines.split(',').map(x=>x.trim()) : [];
+            return primArr.includes(disc) || allArr.includes(disc);
+        });
+        if(type === 'Journal') items = items.filter(r => r.entry_type !== "Public Lecture");
+        if(type === 'Lecture') items = items.filter(r => r.entry_type === "Public Lecture");
+        if(yearFilter) items = items.filter(r => r.volume_or_year_greek === yearFilter);
+        items.sort((a,b) => (getCleanYear(a) || "9999").localeCompare(getCleanYear(b) || "9999"));
+        let yrText = yearFilter ? ` (Year: ${yearFilter})` : "";
+        openListModal(`Discipline: ${disc}${yrText}`, `Total Records (${type}): ${items.length}`, items);
+    }
+
+    function viewScan(imageName) { document.getElementById('scanImage').src = "split_pages/" + imageName; document.getElementById('scanModal').style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function generateCitation(author, title, year) {
+        const citation = `${author && author !== "N/A" ? author : "Ανώνυμος"}. "${title}". Εν Κωνσταντινουπόλει Ελληνικός Φιλολογικός Σύλλογος, ${year && year !== "N/A" ? year : "n.d."}.`;
+        navigator.clipboard.writeText(citation).then(() => alert("Citation copied:\n\n" + citation));
+    }
+    function escapeQuote(str) { return str ? str.replace(/'/g, "\\'").replace(/"/g, "&quot;") : ""; }
+</script>
+
+<!-- Transformer.js Semantic Search Module -->
+<script type="module">
+    import { pipeline } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.16.0';
+
+    let corpusData = null;
+    let embedder = null;
+
+    function dotProduct(vecA, vecB) {
+        let result = 0;
+        for (let i = 0; i < vecA.length; i++) {
+            result += vecA[i] * vecB[i];
+        }
+        return result;
+    }
+
+    document.getElementById('semanticBtn').addEventListener('click', async () => {
+        const query = document.getElementById('semanticInput').value.trim();
+        const statusEl = document.getElementById('semanticStatus');
+        const resultsEl = document.getElementById('semanticResults');
+
+        if (!query) return;
+        resultsEl.innerHTML = "";
+        
+        try {
+            if (!corpusData) {
+                statusEl.innerText = "Fetching semantic database...";
+                const res = await fetch('corpus_embeddings.json');
+                corpusData = await res.json();
+            }
+
+            if (!embedder) {
+                statusEl.innerText = "Loading Multilingual AI Model (Downloading to browser cache on first run. Please wait...)";
+                embedder = await pipeline('feature-extraction', 'Xenova/paraphrase-multilingual-MiniLM-L12-v2');
+            }
+
+            statusEl.innerText = "Embedding query & calculating multidimensional distances...";
+            const output = await embedder(query, { pooling: 'mean', normalize: true });
+            const queryVector = Array.from(output.data);
+
+            let scoredDocs = corpusData.map(doc => {
+                return { ...doc, score: dotProduct(queryVector, doc.embedding) };
+            });
+
+            let relevantDocs = scoredDocs.filter(d => d.score >= 0.10);
+            relevantDocs.sort((a, b) => b.score - a.score);
+            let topMatches = relevantDocs; 
+
+            if (topMatches.length === 0) {
+                statusEl.innerText = `No conceptual matches found for: "${query}"`;
+                return;
+            }
+
+            statusEl.innerText = `Found ${topMatches.length} conceptual matches for: "${query}"`;
+            
+            topMatches.forEach(item => {
+                let typeTag = item.type === "Public Lecture" ? " <strong>[Lecture]</strong>" : "";
+                let originalRow = masterData.find(r => r.title_english === item.title || r.title_greek === item.title);
+                
+                let displayTitle = item.title;
+                let subTitle = "";
+                
+                if (originalRow) {
+                    displayTitle = originalRow.title_english || originalRow.title_greek;
+                    subTitle = originalRow.title_english ? originalRow.title_greek : "";
+                }
+
+                let titleHTML = `<div style="font-size: 1rem; font-weight: 500; color: var(--text-color);">${displayTitle}</div>`;
+                if (subTitle && subTitle !== "N/A") {
+                    titleHTML += `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">${subTitle}</div>`;
+                }
+
+                resultsEl.innerHTML += `
+                    <div style="padding: 15px; border: 1px solid var(--border-light); border-left: 4px solid var(--accent-cyan); background: #ffffff; border-radius: 3px; margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                            <div>${titleHTML}</div>
+                            <div style="background: #e0f2fe; color: #0369a1; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; margin-left: 15px;">Relevance: ${(item.score * 100).toFixed(1)}%</div>
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 8px;">
+                            <em>${item.author}</em> &nbsp;|&nbsp; <strong>${item.year}</strong> ${typeTag}
+                        </div>
+                        <div style="font-size: 0.75rem; color: #4b5563;"><strong>Macro Categories:</strong> ${item.disciplines}</div>
+                    </div>
+                `;
+            });
+
+        } catch (error) {
+            console.error(error);
+            statusEl.innerText = "An error occurred during semantic search initialization. Please ensure corpus_embeddings.json has been generated.";
+        }
+    });
+
+    document.getElementById('semanticInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') { document.getElementById('semanticBtn').click(); }
+    });
+</script>
+</body>
+</html>
