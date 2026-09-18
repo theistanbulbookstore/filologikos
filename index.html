@@ -489,6 +489,11 @@
 
         masterData.forEach(row => {
             if (!row.title_greek) return;
+
+            // HIJACK: Force the entire website to use the new AI 'discipline' column
+    row.primary_disciplines = row.discipline;
+    row.disciplines = row.discipline;
+
             row.search_text = `${row.author_greek || ''} ${row.title_greek} ${row.title_english || ''} ${row.standard_author || ''}`;
 
             if (row.volume_or_year_greek && row.volume_or_year_greek !== "N/A") {
